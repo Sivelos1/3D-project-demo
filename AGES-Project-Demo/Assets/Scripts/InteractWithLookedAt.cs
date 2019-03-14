@@ -8,17 +8,30 @@ using UnityEngine;
 
 public class InteractWithLookedAt : MonoBehaviour
 {
-
-    [SerializeField]
-    private VisionBasedDetection detectLookedAtInteractive;
-
+    private IInteractive lookedAtInteractive;
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetButtonDown("Interact") && detectLookedAtInteractive.LookedAtInteractive != null)
+        if (Input.GetButtonDown("Interact") && lookedAtInteractive != null)
         {
             Debug.Log("player did the shit");
-            detectLookedAtInteractive.LookedAtInteractive.interactWith();
+            lookedAtInteractive.interactWith();
         }
     }
+
+    private void OnLookedAtInteractiveChanged(IInteractive newLookedAtInteractive)
+    {
+        lookedAtInteractive = newLookedAtInteractive;
+    }
+
+    #region Event Subscription / Unsubscription
+    private void OnEnable()
+    {
+        VisionBasedDetection.LookedAtInteractiveChanged += OnLookedAtInteractiveChanged;
+    }
+    private void OnDisable()
+    {
+        VisionBasedDetection.LookedAtInteractiveChanged -= OnLookedAtInteractiveChanged;
+    }
+    #endregion
 }

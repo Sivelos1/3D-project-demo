@@ -10,4 +10,6 @@ public interface IInteractive
 {
     void interactWith();
 
+    string DisplayText { get; }
+
 }
