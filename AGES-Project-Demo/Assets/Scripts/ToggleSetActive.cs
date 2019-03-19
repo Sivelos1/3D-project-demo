@@ -25,8 +25,9 @@ public class ToggleSetActive : InteractiveObject
     /// Toggles the active self value for the objectToToggle when the player interacts with this object.
     /// </summary>
     /// 
-    private void Start()
+    protected override void Awake()
     {
+        base.Awake();
         if (!IsResuable) toggledDisplayText = string.Empty;
         originalDisplayText = displayText;
     }

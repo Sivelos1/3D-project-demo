@@ -11,7 +11,7 @@ public class InteractiveObject : MonoBehaviour, IInteractive
     protected string displayText = nameof(InteractiveObject);
     private AudioSource audioSource;
 
-    private void Awake()
+    protected virtual void Awake()
     {
         audioSource = GetComponent<AudioSource>();
     }
