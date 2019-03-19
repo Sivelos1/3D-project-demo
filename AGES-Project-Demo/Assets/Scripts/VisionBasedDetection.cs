@@ -39,6 +39,10 @@ public class VisionBasedDetection : MonoBehaviour
         LookedAtInteractive = GetLookedAtInteractive();
     }
 
+    /// <summary>
+    /// Raycasts forward from the camera to look for IInteractives.
+    /// </summary>
+    /// <returns>Returns the first IInteractive detected, or null if none are found.</returns>
     private IInteractive GetLookedAtInteractive()
     {
         Debug.DrawRay(raycastOrigin.position, raycastOrigin.forward * maxRange, Color.red);

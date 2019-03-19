@@ -8,7 +8,7 @@ using UnityEngine;
 
 public interface IInteractive
 {
-    void interactWith();
+    void InteractWith();
 
     string DisplayText { get; }
 

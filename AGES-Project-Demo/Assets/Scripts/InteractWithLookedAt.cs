@@ -15,7 +15,7 @@ public class InteractWithLookedAt : MonoBehaviour
         if (Input.GetButtonDown("Interact") && lookedAtInteractive != null)
         {
             Debug.Log("player did the shit");
-            lookedAtInteractive.interactWith();
+            lookedAtInteractive.InteractWith();
         }
     }
 

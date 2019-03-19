@@ -2,17 +2,26 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
 public class InteractiveObject : MonoBehaviour, IInteractive
 {
     public string DisplayText => displayText;
 
     [SerializeField]
-    private string displayText;
-    
-    
+    protected string displayText = nameof(InteractiveObject);
+    private AudioSource audioSource;
 
-    public void interactWith()
+    private void Awake()
     {
+        audioSource = GetComponent<AudioSource>();
+    }
+
+
+
+    public virtual void InteractWith()
+    {
+        if(audioSource != null)
+            audioSource.Play();
         Debug.Log($"Player just interacted with: {gameObject.name}.");
     }
 }
