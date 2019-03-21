@@ -42,7 +42,6 @@ public class ToggleSetActive : InteractiveObject
             else
                 displayText = originalDisplayText;
             hasBeenUsed = true;
-
         }
     }
 }
