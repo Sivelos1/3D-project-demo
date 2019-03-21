@@ -63,5 +63,5 @@ MonoBehaviour:
   minimumRoomCount: 2
   maxRoomCount: 2
   roomSpacing: 2
-  numberOfHallways: 2
+  hallwayAnchorMaxDistance: 2
   chanceOfHallwayTwistingAway: 1

@@ -111,23 +111,22 @@ public class DungeonController : MonoBehaviour
     {
         dungeonMap = ResetMap(dungeonMap);
         BuildRooms();
-        SurroundDungeonMapWithWalls();
+        dungeonMap = SurroundMapWithOutlineXThick(dungeonMap, 0, currentLayout.FloorOutlineThickness);
         
     }
 
     //Surrounds the dungeonMap with a wall currentFloorLayout.floorOutlineThickness wide. This wall cannot be interacted with.
-    private void SurroundDungeonMapWithWalls()
+    private int[,] SurroundMapWithOutlineXThick(int[,] mapToOutline, int outlineValue, int outlineThickness)
     {
-        int[,] newMap = new int[currentLayout.FloorSize + (currentLayout.FloorOutlineThickness*2), currentLayout.FloorSize + (currentLayout.FloorOutlineThickness*2)];
-        Debug.Log(Mathf.Sqrt(newMap.Length));
-        for (int x = 0; x < (currentLayout.FloorSize + (currentLayout.FloorOutlineThickness * 2)); x++)
+        int[,] newMap = new int[Get2DArraySizeX(mapToOutline) + (outlineThickness * 2), Get2DArraySizeY(mapToOutline) + (outlineThickness*2)];
+        for (int x = 0; x < (Get2DArraySizeX(mapToOutline) + (outlineThickness * 2)); x++)
         {
-            for (int y = 0; y < (currentLayout.FloorSize + (currentLayout.FloorOutlineThickness * 2)); y++)
+            for (int y = 0; y < (Get2DArraySizeY(mapToOutline) + (outlineThickness * 2)); y++)
             {
                 newMap[x, y] = 0;
             }
         }
-        dungeonMap = CombineTwoDimensionalArrays(newMap, dungeonMap, currentLayout.FloorOutlineThickness, currentLayout.FloorOutlineThickness);
+        return CombineTwoDimensionalArrays(newMap, dungeonMap, currentLayout.FloorOutlineThickness, currentLayout.FloorOutlineThickness);
     }
 
     //Locates the layout being currently used by the Dungeon, and assigns it to the currentLayout variable.
@@ -161,37 +160,44 @@ public class DungeonController : MonoBehaviour
             int roomSizeY = Random.Range(currentLayout.MinimumRoomSizeY, currentLayout.MaxRoomSizeY);
             Debug.Log($"Preparing to create Room of x:{roomSizeX}, y:{roomSizeY}.");
             int[,] newRoom = new int[roomSizeX, roomSizeY];
-            for (int x = 0; x < roomSizeX; x++)
+            for (int x = 0; x < roomSizeX + currentLayout.RoomSpacing; x++)
             {
-                for (int y = 0; y < roomSizeY; y++)
+                for (int y = 0; y < roomSizeY + currentLayout.RoomSpacing; y++)
                 {
-                    newRoom[x, y] = 1;
+                    try
+                    {
+                        newRoom[x, y] = 1;
+                    }
+                    catch (System.IndexOutOfRangeException)
+                    {
+                        continue;
+                    }
                 }
             }
             Debug.Log($"Room of x:{roomSizeX}, y:{roomSizeY} complete.");
+            newRoom = SurroundMapWithOutlineXThick(newRoom, 2, currentLayout.RoomSpacing);
             int[] roomPos = DetermineRoomCoordinates(roomSizeX, roomSizeY);
-            for (int z = 0; z < currentLayout.RoomGenerationFailureLimit || CheckIfCanPutRoom(roomSizeX, roomSizeY, roomPos); z++)
+            for (int z = 0; z < currentLayout.RoomGenerationFailureLimit || CheckIfCanPutRoom(newMap, roomSizeX, roomSizeY, roomPos); z++)
             {
-                if (CheckIfCanPutRoom(roomSizeX, roomSizeY, roomPos))
+                if (CheckIfCanPutRoom(newMap, roomSizeX, roomSizeY, roomPos))
                     break;
                 roomPos = DetermineRoomCoordinates(roomSizeX, roomSizeY);
             }
-            if (!CheckIfCanPutRoom(roomSizeX, roomSizeY, roomPos))
+            if (!CheckIfCanPutRoom(newMap, roomSizeX, roomSizeY, roomPos))
                 continue;
             rooms.Add(newRoom);
             roomCoordinates.Add(roomPos);
-            //newMap = CombineTwoDimensionalArrays(newMap, newRoom, roomPos[0], roomPos[1]);
+            newMap = CombineTwoDimensionalArrays(newMap, newRoom, roomPos[0] - currentLayout.RoomSpacing, roomPos[1] - currentLayout.RoomSpacing);
         }
-        for (int i = 0; i < rooms.Count; i++)
-        {
-            int connectingRoom = Random.Range(0, rooms.Count);
-            while (connectingRoom == i)
-            {
-                connectingRoom = Random.Range(0, rooms.Count);
-            }
-            newMap = CreateHallway(rooms[i], roomCoordinates[i], rooms[connectingRoom], roomCoordinates[connectingRoom]);
-        }
-
+        //for (int i = 0; i < rooms.Count; i++)
+        //{
+        //    int connectingRoom = Random.Range(0, rooms.Count);
+        //    while (connectingRoom == i)
+        //    {
+        //        connectingRoom = Random.Range(0, rooms.Count);
+        //    }
+        //    newMap = CreateHallway(rooms[i], roomCoordinates[i], rooms[connectingRoom], roomCoordinates[connectingRoom]);
+        //}
         dungeonMap = CombineTwoDimensionalArrays(dungeonMap, newMap);
     }
 
@@ -219,7 +225,7 @@ public class DungeonController : MonoBehaviour
 
         for (int i = 0; i < startingRoom.Length; i++)
         {
-            if (CheckIfCanPutHallwayAnchor(startingAnchor[0], startingAnchor[1]))
+            if (CheckIfCanPutHallwayAnchor(newMap, startingAnchor[0], startingAnchor[1]))
             {
                 startingAnchor = GetRandomCoordinateAtEdgeOfArray(startingRoom);
                 startingAnchor[0] += startingRoomCoordinates[0];
@@ -229,7 +235,7 @@ public class DungeonController : MonoBehaviour
         anchors.Add(startingAnchor);
         for (int i = 0; i < connectingRoom.Length; i++)
         {
-            if (CheckIfCanPutHallwayAnchor(connectingAnchor[0], connectingAnchor[1]))
+            if (CheckIfCanPutHallwayAnchor(newMap, connectingAnchor[0], connectingAnchor[1]))
             {
                 connectingAnchor = GetRandomCoordinateAtEdgeOfArray(startingRoom);
                 connectingAnchor[0] += connectingRoomCoordinates[0];
@@ -241,46 +247,33 @@ public class DungeonController : MonoBehaviour
         newMap[startingAnchor[0], startingAnchor[1]] = 2;
         newMap[connectingAnchor[0], connectingAnchor[1]] = 2;
 
-        int[] newAnchor = startingAnchor;
+        int[] newTile = GetNextHallwayTile(newMap, startingAnchor[0], startingAnchor[1], connectingAnchor[0], connectingAnchor[1]);
 
-        while (newAnchor != connectingAnchor)
-        {
-            newAnchor[0] = Random.Range((anchors[anchors.Count][0] - currentLayout.RoomSpacing), (anchors[anchors.Count][0] + currentLayout.RoomSpacing));
-            newAnchor[1] = Random.Range((anchors[anchors.Count][1] - currentLayout.RoomSpacing), (anchors[anchors.Count][1] + currentLayout.RoomSpacing));
-            try
-            {
-                if (CheckIfCanPutHallwayAnchor(newAnchor[0], newAnchor[1]))
-                {
-                    anchors.Add(newAnchor);
-                    newMap[newAnchor[0], newAnchor[1]] = 2;
-                    break;
-                }
-            }
-            catch (System.IndexOutOfRangeException)
-            {
-                continue;
-            }
-            
-        }
-
-
-
-        #region slobmyknowb
-        //int[] hallCoords = GetRandomCoordinateAtEdgeOfArray(startingRoom);
-        //hallCoords[0] += startingRoomCoordinates[0];
-        //hallCoords[1] += startingRoomCoordinates[1];
-
-        //newMap[hallCoords[0], hallCoords[1]] = 2;
-
-        //hallCoords = GetRandomCoordinateAtEdgeOfArray(connectingRoom);
-        //hallCoords[0] += connectingRoomCoordinates[0];
-        //hallCoords[1] += connectingRoomCoordinates[1];
-
-        //newMap[hallCoords[0], hallCoords[1]] = 2;
-        #endregion
-
+        newMap[newTile[0], newTile[1]] = 2;
+        
         return newMap;
 
+    }
+
+    private int[] GetNextHallwayTile(int[,] baseMap, int startingAnchorX, int startingAnchorY, int targetAnchorX, int targetAnchorY)
+    {
+        int[] coordinates = { startingAnchorX, startingAnchorY };
+        int[,] newMap = ExtractTwoDimensionalArray(baseMap, startingAnchorX + (currentLayout.RoomSpacing*2), startingAnchorY + (currentLayout.RoomSpacing * 2), -currentLayout.RoomSpacing, -currentLayout.RoomSpacing);
+
+        int differenceX = 0, differenceY = 0;
+        differenceX = startingAnchorX - targetAnchorX;
+        differenceY = startingAnchorY - targetAnchorY;
+        Debug.Log($"x:{differenceX}, y:{differenceY}");
+        if (differenceX > 0)
+            coordinates[0]++;
+        if (differenceY > 0)
+            coordinates[1]--;
+        if (differenceX < 0)
+            coordinates[0]--;
+        if (differenceY < 0)
+            coordinates[1]++;
+        Debug.Log($"Returning coordinates x:{coordinates[0]}, y:{coordinates[1]}");
+        return coordinates;
     }
 
     private int[] GetRandomCoordinateAtEdgeOfArray(int[,] array)
@@ -306,7 +299,6 @@ public class DungeonController : MonoBehaviour
             return false;
         else
         {
-            Debug.Log($"x:{x}, y:{y} is at the edge of the Array size x:{Get2DArraySizeX(array)}, y{Get2DArraySizeY(array)}!");
             return true;
         }
     }
@@ -320,7 +312,7 @@ public class DungeonController : MonoBehaviour
         return coordinates;
     }
 
-    private bool CheckIfCanPutRoom(int sizeX, int sizeY, int[] coordinates)
+    private bool CheckIfCanPutRoom(int[,] mapToCheck, int sizeX, int sizeY, int[] coordinates)
     {
         int overLappingTiles = 0;
         Debug.Log($"Checking to see if Room of size x:{sizeX}, y:{sizeY} can be positioned at x:{coordinates[0]}, y:{coordinates[1]}.");
@@ -330,7 +322,7 @@ public class DungeonController : MonoBehaviour
             {
                 try
                 {
-                    if (dungeonMap[x, y] == 1)
+                    if (mapToCheck[x, y] == 1 || mapToCheck[x, y] == 2)
                     {
                         overLappingTiles++;
                     }
@@ -353,7 +345,7 @@ public class DungeonController : MonoBehaviour
         }
     }
 
-    private bool CheckIfCanPutHallwayAnchor(int targetX, int targetY)
+    private bool CheckIfCanPutHallwayAnchor(int[,] mapToCheck, int targetX, int targetY)
     {
         int tilesThatHallwayAnchorsCannotOccupy = 0;
         Debug.Log($"Checking to see if Hallway Anchor of x:{targetX}, y:{targetY} can be placed.");
@@ -363,7 +355,9 @@ public class DungeonController : MonoBehaviour
             {
                 try
                 {
-                    if (dungeonMap[x, y] == 1)
+                    if (x > Get2DArraySizeX(dungeonMap) || x < 0 || y > Get2DArraySizeY(dungeonMap) || y < 0)
+                        continue;
+                    if (mapToCheck[x, y] == 1)
                     {
                         tilesThatHallwayAnchorsCannotOccupy++;
                     }
@@ -397,19 +391,46 @@ public class DungeonController : MonoBehaviour
                 {
                     if (newArray[x + xOffset, y + yOffset] != ignoredValue)
                     {
-                        //Debug.Log($"Changing value {baseArray[x + xOffset, y + yOffset]} at x:{x + xOffset}, y:{y + yOffset} to {arrayToAdd[x, y]}");
                         newArray[x + xOffset, y + yOffset] = arrayToAdd[x, y];
-
                     }
                     else
                         continue;
                 }
                 catch (System.IndexOutOfRangeException)
                 {
-
                     continue;
                 }
             }
+        }
+
+        return newArray;
+    }
+
+
+    private int[,] ExtractTwoDimensionalArray(int[,] baseArray, int extractSizeX, int extractSizeY, int xOffset = 0, int yOffset = 0, int ignoredValue = -1)
+    {
+        int[,] newArray = new int[extractSizeX, extractSizeY];
+        int indexToWriteX = 0;
+        int indexToWriteY = 0;
+        for (int x = xOffset; x < extractSizeX + xOffset; x++)
+        {
+            for (int y = yOffset; y < extractSizeY + yOffset; y++)
+            {
+                try
+                {
+                    if (baseArray[x, y] != ignoredValue)
+                    {
+                        newArray[indexToWriteX, indexToWriteY] = baseArray[x, y];
+                        indexToWriteY++;
+                    }
+                }
+                catch (System.IndexOutOfRangeException)
+                {
+                    continue;
+                }
+                
+            }
+            indexToWriteX++;
         }
 
         return newArray;
