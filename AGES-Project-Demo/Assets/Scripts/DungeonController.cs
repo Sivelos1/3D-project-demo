@@ -29,6 +29,7 @@ public class DungeonController : MonoBehaviour
     [SerializeField]
     [Tooltip("When going to a new floor, the game will display [DUNGEON NAME] BF[Floor] rather than F[Floor].")]
     private bool stairsLeadDown = false;
+    
 
     #region Data Maps
     //Stores gameObjects as tiles that form the dungeon.
@@ -105,6 +106,7 @@ public class DungeonController : MonoBehaviour
 
     }
 
+    //Generates a series of data-maps and applies them all to the dungeonMap for use in generating the dungeon.
     private void PrepareDungeonMap()
     {
         dungeonMap = ResetMap(dungeonMap);
@@ -128,6 +130,7 @@ public class DungeonController : MonoBehaviour
         dungeonMap = CombineTwoDimensionalArrays(newMap, dungeonMap, currentLayout.FloorOutlineThickness, currentLayout.FloorOutlineThickness);
     }
 
+    //Locates the layout being currently used by the Dungeon, and assigns it to the currentLayout variable.
     private DungeonLayoutInformation getCurrentLayout()
     {
         List<DungeonLayoutInformation> tempList = new List<DungeonLayoutInformation>();
@@ -144,9 +147,14 @@ public class DungeonController : MonoBehaviour
             return backupLayout;
     }
 
+    //Creates a series of boxes to be placed in the dungeon.
     private void BuildRooms()
     {
+        int[,] newMap = new int[Get2DArraySizeX(dungeonMap), Get2DArraySizeY(dungeonMap)];
+        newMap = ResetMap(newMap);
         int roomsToBuild = Random.Range(currentLayout.MinimumRoomCount, currentLayout.MaxRoomCount);
+        List<int[,]> rooms = new List<int[,]>();
+        List<int[]> roomCoordinates = new List<int[]>();
         for (int i = 0; i < roomsToBuild; i++)
         {
             int roomSizeX = Random.Range(currentLayout.MinimumRoomSizeX, currentLayout.MaxRoomSizeX);
@@ -158,7 +166,6 @@ public class DungeonController : MonoBehaviour
                 for (int y = 0; y < roomSizeY; y++)
                 {
                     newRoom[x, y] = 1;
-                    //Debug.Log($"Made x:{x}, y:{y} of new Room.");
                 }
             }
             Debug.Log($"Room of x:{roomSizeX}, y:{roomSizeY} complete.");
@@ -171,7 +178,136 @@ public class DungeonController : MonoBehaviour
             }
             if (!CheckIfCanPutRoom(roomSizeX, roomSizeY, roomPos))
                 continue;
-            dungeonMap = CombineTwoDimensionalArrays(dungeonMap, newRoom, roomPos[0], roomPos[1], true, roomSizeX, roomSizeY);
+            rooms.Add(newRoom);
+            roomCoordinates.Add(roomPos);
+            //newMap = CombineTwoDimensionalArrays(newMap, newRoom, roomPos[0], roomPos[1]);
+        }
+        for (int i = 0; i < rooms.Count; i++)
+        {
+            int connectingRoom = Random.Range(0, rooms.Count);
+            while (connectingRoom == i)
+            {
+                connectingRoom = Random.Range(0, rooms.Count);
+            }
+            newMap = CreateHallway(rooms[i], roomCoordinates[i], rooms[connectingRoom], roomCoordinates[connectingRoom]);
+        }
+
+        dungeonMap = CombineTwoDimensionalArrays(dungeonMap, newMap);
+    }
+
+    //Returns the size of the room's width.
+    private int Get2DArraySizeX(int[,] array)
+    {
+        return array.GetLength(0);
+    }
+
+    //Returns the size of the room's depth.
+    private int Get2DArraySizeY(int[,] array)
+    {
+        return array.GetLength(1);
+    }
+
+    private int[,] CreateHallway(int[,] startingRoom, int[] startingRoomCoordinates, int[,] connectingRoom, int[] connectingRoomCoordinates)
+    {
+        int[,] newMap = new int[Get2DArraySizeX(dungeonMap), Get2DArraySizeY(dungeonMap)];
+
+        newMap = CombineTwoDimensionalArrays(newMap, startingRoom, startingRoomCoordinates[0], startingRoomCoordinates[1]);
+        newMap = CombineTwoDimensionalArrays(newMap, connectingRoom, connectingRoomCoordinates[0], connectingRoomCoordinates[1]);
+
+        int[] startingAnchor = { 0, 0 }, connectingAnchor = { 0, 0 };
+        List<int[]> anchors = new List<int[]>();
+
+        for (int i = 0; i < startingRoom.Length; i++)
+        {
+            if (CheckIfCanPutHallwayAnchor(startingAnchor[0], startingAnchor[1]))
+            {
+                startingAnchor = GetRandomCoordinateAtEdgeOfArray(startingRoom);
+                startingAnchor[0] += startingRoomCoordinates[0];
+                startingAnchor[1] += startingRoomCoordinates[1];
+            }
+        }
+        anchors.Add(startingAnchor);
+        for (int i = 0; i < connectingRoom.Length; i++)
+        {
+            if (CheckIfCanPutHallwayAnchor(connectingAnchor[0], connectingAnchor[1]))
+            {
+                connectingAnchor = GetRandomCoordinateAtEdgeOfArray(startingRoom);
+                connectingAnchor[0] += connectingRoomCoordinates[0];
+                connectingAnchor[1] += connectingRoomCoordinates[1];
+                break;
+            }
+        }
+
+        newMap[startingAnchor[0], startingAnchor[1]] = 2;
+        newMap[connectingAnchor[0], connectingAnchor[1]] = 2;
+
+        int[] newAnchor = startingAnchor;
+
+        while (newAnchor != connectingAnchor)
+        {
+            newAnchor[0] = Random.Range((anchors[anchors.Count][0] - currentLayout.RoomSpacing), (anchors[anchors.Count][0] + currentLayout.RoomSpacing));
+            newAnchor[1] = Random.Range((anchors[anchors.Count][1] - currentLayout.RoomSpacing), (anchors[anchors.Count][1] + currentLayout.RoomSpacing));
+            try
+            {
+                if (CheckIfCanPutHallwayAnchor(newAnchor[0], newAnchor[1]))
+                {
+                    anchors.Add(newAnchor);
+                    newMap[newAnchor[0], newAnchor[1]] = 2;
+                    break;
+                }
+            }
+            catch (System.IndexOutOfRangeException)
+            {
+                continue;
+            }
+            
+        }
+
+
+
+        #region slobmyknowb
+        //int[] hallCoords = GetRandomCoordinateAtEdgeOfArray(startingRoom);
+        //hallCoords[0] += startingRoomCoordinates[0];
+        //hallCoords[1] += startingRoomCoordinates[1];
+
+        //newMap[hallCoords[0], hallCoords[1]] = 2;
+
+        //hallCoords = GetRandomCoordinateAtEdgeOfArray(connectingRoom);
+        //hallCoords[0] += connectingRoomCoordinates[0];
+        //hallCoords[1] += connectingRoomCoordinates[1];
+
+        //newMap[hallCoords[0], hallCoords[1]] = 2;
+        #endregion
+
+        return newMap;
+
+    }
+
+    private int[] GetRandomCoordinateAtEdgeOfArray(int[,] array)
+    {
+        List<int[]> edgeCoordinates = new List<int[]>();
+        for (int x = 0; x < Get2DArraySizeX(array); x++)
+        {
+            for (int y = 0; y < Get2DArraySizeY(array); y++)
+            {
+                if(IsCoordinateAtEdgeOfArray(x,y, array))
+                {
+                    int[] newEdgeCoordinate = { x, y };
+                    edgeCoordinates.Add(newEdgeCoordinate);
+                }
+            }
+        }
+        return edgeCoordinates[Random.Range(0, edgeCoordinates.Count)];
+    }
+
+    private bool IsCoordinateAtEdgeOfArray(int x, int y, int[,] array)
+    {
+        if ((x > 0 && x < Get2DArraySizeX(array)) && (y > 0 && y < Get2DArraySizeY(array)))
+            return false;
+        else
+        {
+            Debug.Log($"x:{x}, y:{y} is at the edge of the Array size x:{Get2DArraySizeX(array)}, y{Get2DArraySizeY(array)}!");
+            return true;
         }
     }
 
@@ -186,97 +322,97 @@ public class DungeonController : MonoBehaviour
 
     private bool CheckIfCanPutRoom(int sizeX, int sizeY, int[] coordinates)
     {
-        Debug.Log("Checking to see if Room can be positioned.");
-        for (int x = 0; x < sizeX; x++)
+        int overLappingTiles = 0;
+        Debug.Log($"Checking to see if Room of size x:{sizeX}, y:{sizeY} can be positioned at x:{coordinates[0]}, y:{coordinates[1]}.");
+        for (int x = (coordinates[0] - currentLayout.RoomSpacing); x < (sizeX + coordinates[0] + (currentLayout.RoomSpacing*2)); x++)
         {
-            for (int y = 0; y < sizeY; y++)
+            for (int y = (coordinates[1] - currentLayout.RoomSpacing); y < (sizeY + coordinates[1] + (currentLayout.RoomSpacing * 2)); y++)
             {
                 try
                 {
                     if (dungeonMap[x, y] == 1)
-                        return false;
-                    if (dungeonMap[x + (currentLayout.RoomSpacing + 1), y] == 1)
-                        return false;
-                    if (dungeonMap[x, y + (currentLayout.RoomSpacing + 1)] == 1)
-                        return false;
-                    if (dungeonMap[x + (currentLayout.RoomSpacing + 1), y + (currentLayout.RoomSpacing + 1)] == 1)
-                        return false;
-                    if (dungeonMap[x - (currentLayout.RoomSpacing + 1), y] == 1)
-                        return false;
-                    if (dungeonMap[x, y - (currentLayout.RoomSpacing + 1)] == 1)
-                        return false;
-                    if (dungeonMap[x - (currentLayout.RoomSpacing + 1), y - (currentLayout.RoomSpacing + 1)] == 1)
-                        return false;
-                    if (dungeonMap[x + (currentLayout.RoomSpacing + 1), y - (currentLayout.RoomSpacing + 1)] == 1)
-                        return false;
-                    if (dungeonMap[x - (currentLayout.RoomSpacing + 1), y + (currentLayout.RoomSpacing + 1)] == 1)
-                        return false;
+                    {
+                        overLappingTiles++;
+                    }
                 }
                 catch (System.IndexOutOfRangeException)
                 {
                     continue;
                 }
-                
             }
         }
-        Debug.Log("The room can be placed!");
-        return true;
-    }
-
-    private int[,] CombineTwoDimensionalArrays(int[,] baseArray, int[,] arrayToAdd, int xOffset = 0, int yOffset = 0, bool addedArrayNotSquare = false, int addedArrayX = 0, int addedArrayY = 0,  int ignoredValue = -1)
-    {
-        int[,] newArray = baseArray;
-        if (addedArrayNotSquare == false)
+        if(overLappingTiles == 0)
         {
-            for (int x = 0; x < Mathf.Sqrt(baseArray.Length); x++)
-            {
-                for (int y = 0; y < Mathf.Sqrt(baseArray.Length); y++)
-                {
-                    try
-                    {
-                        if (newArray[x + xOffset, y + yOffset] != ignoredValue)
-                        {
-                            //Debug.Log($"Changing value {baseArray[x + xOffset, y + yOffset]} at x:{x + xOffset}, y:{y + yOffset} to {arrayToAdd[x, y]}");
-                            newArray[x + xOffset, y + yOffset] = arrayToAdd[x, y];
-
-                        }
-                        else
-                            continue;
-                    }
-                    catch (System.IndexOutOfRangeException)
-                    {
-
-                        continue;
-                    }
-                }
-            }
+            Debug.Log("The room can be placed!");
+            return true;
         }
         else
         {
-            for (int x = 0; x < addedArrayX; x++)
+            Debug.Log("The room cannot be placed.");
+            return false;
+        }
+    }
+
+    private bool CheckIfCanPutHallwayAnchor(int targetX, int targetY)
+    {
+        int tilesThatHallwayAnchorsCannotOccupy = 0;
+        Debug.Log($"Checking to see if Hallway Anchor of x:{targetX}, y:{targetY} can be placed.");
+        for (int x = (targetX - currentLayout.RoomSpacing); x < (targetX + currentLayout.RoomSpacing); x++)
+        {
+            for (int y = (targetY - currentLayout.RoomSpacing); y < (targetY + currentLayout.RoomSpacing) ; y++)
             {
-                for (int y = 0; y < addedArrayY; y++)
+                try
+                {
+                    if (dungeonMap[x, y] == 1)
+                    {
+                        tilesThatHallwayAnchorsCannotOccupy++;
+                    }
+                }
+                catch (System.IndexOutOfRangeException)
+                {
+                    continue;
+                }
+            }
+        }
+        if (tilesThatHallwayAnchorsCannotOccupy == 0)
+        {
+            Debug.Log("The anchor can be placed!");
+            return true;
+        }
+        else
+        {
+            Debug.Log("The anchor cannot be placed.");
+            return false;
+        }
+    }
+
+    private int[,] CombineTwoDimensionalArrays(int[,] baseArray, int[,] arrayToAdd, int xOffset = 0, int yOffset = 0,  int ignoredValue = -1)
+    {
+        int[,] newArray = baseArray;
+        for (int x = 0; x < Get2DArraySizeX(baseArray); x++)
+        {
+            for (int y = 0; y < Get2DArraySizeY(baseArray); y++)
+            {
+                try
                 {
                     if (newArray[x + xOffset, y + yOffset] != ignoredValue)
                     {
-                        try
-                        {
-                            //Debug.Log($"Changing value {baseArray[x + xOffset, y + yOffset]} at x:{x + xOffset}, y:{y + yOffset} to {arrayToAdd[x, y]}");
-                            newArray[x + xOffset, y + yOffset] = arrayToAdd[x, y];
-                        }
-                        catch (System.IndexOutOfRangeException)
-                        {
-                            continue;
-                        }
+                        //Debug.Log($"Changing value {baseArray[x + xOffset, y + yOffset]} at x:{x + xOffset}, y:{y + yOffset} to {arrayToAdd[x, y]}");
+                        newArray[x + xOffset, y + yOffset] = arrayToAdd[x, y];
 
                     }
                     else
                         continue;
+                }
+                catch (System.IndexOutOfRangeException)
+                {
+
+                    continue;
                 }
             }
         }
 
         return newArray;
     }
-    
+
 }

@@ -98,14 +98,9 @@ public class DungeonLayoutInformation : MonoBehaviour
         get { return roomSpacing; }
         private set { }
     }
-    public int LeftHallPadding
+    public float ChanceOfHallwayTwistingAway
     {
-        get { return leftHallPadding; }
-        private set { }
-    }
-    public int RightHallPadding
-    {
-        get { return rightHallPadding; }
+        get { return chanceOfHallwayTwistingAway; }
         private set { }
     }
     #endregion
@@ -151,15 +146,19 @@ public class DungeonLayoutInformation : MonoBehaviour
     private int floorTerrainFrequency = 0;
 
     [SerializeField]
+    [Tooltip("How many times the dungeon is allowed to fail positioning a room before trying over from stratch.")]
+    [Min(1)]
+    private int roomGenerationFailureLimit = 10;
+
+    [SerializeField]
     [Tooltip("The amount of tiles that a room's width cannot be lower than.")]
+    [Min(1)]
     private int minimumRoomSizeX = 5;
     [SerializeField]
     [Tooltip("The amount of tiles that a room's depth cannot be lower than.")]
+    [Min(1)]
     private int minimumRoomSizeY = 5;
 
-    [SerializeField]
-    [Tooltip("How many times the dungeon is allowed to fail positioning a room before trying over from stratch.")]
-    private int roomGenerationFailureLimit = 10;
 
     [SerializeField]
     [Tooltip("The amount of tiles that a room's width cannot exceed.")]
@@ -176,15 +175,18 @@ public class DungeonLayoutInformation : MonoBehaviour
     private int maxRoomCount = 6;
 
     [SerializeField]
-    [Tooltip("Prevents a room from being generated X amount of tiles from another room.")]
+    [Tooltip("Two Rooms must have at least X tiles between each other.")]
     private int roomSpacing = 1;
 
     [SerializeField]
-    [Tooltip("Determines how many tiles from the left edge of a wall that a hallway can be generated.")]
-    private int leftHallPadding = 5;
+    [Tooltip("The amount of tiles a new hallway anchor will be placed when generating hallways.")]
+    [Min(1)]
+    private int hallwayAnchorMaxDistance = 2;
+
     [SerializeField]
-    [Tooltip("Determines how many tiles from the right edge of a wall that a hallway can be generated.")]
-    private int rightHallPadding = 5;
+    [Tooltip("The closer this value is to 0, the higher the chance of a hallway making a turn away from its goal. Makes hallways twistier. Does not affect tiles connecting hallways and rooms.")]
+    [Min(0)]
+    private float chanceOfHallwayTwistingAway = 1;
     #endregion
 
 }

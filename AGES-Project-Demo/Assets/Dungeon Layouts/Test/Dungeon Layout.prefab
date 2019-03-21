@@ -47,21 +47,21 @@ MonoBehaviour:
     type: 3}
   floorTiles: {fileID: 1835046322751042786, guid: 817688c4f3515024fbeb472041426192,
     type: 3}
-  terrainTiles: {fileID: 1835046322751042786, guid: 817688c4f3515024fbeb472041426192,
+  terrainTiles: {fileID: 8295411838118373394, guid: 5a46808b22ab29b4eaf2266ba3ada0a9,
     type: 3}
   startingFloor: 1
   finalFloor: 5
-  floorSize: 25
+  floorSize: 50
   floorOutlineThickness: 2
   wallTerrainFrequency: 5
   floorTerrainFrequency: 0
-  minimumRoomSizeX: 3
-  minimumRoomSizeY: 3
-  roomGenerationFailureLimit: 3
-  maxRoomSizeX: 5
-  maxRoomSizeY: 5
-  minimumRoomCount: 4
-  maxRoomCount: 4
+  roomGenerationFailureLimit: 10
+  minimumRoomSizeX: 7
+  minimumRoomSizeY: 10
+  maxRoomSizeX: 20
+  maxRoomSizeY: 15
+  minimumRoomCount: 2
+  maxRoomCount: 2
   roomSpacing: 2
-  leftHallPadding: 5
-  rightHallPadding: 5
+  numberOfHallways: 2
+  chanceOfHallwayTwistingAway: 1
