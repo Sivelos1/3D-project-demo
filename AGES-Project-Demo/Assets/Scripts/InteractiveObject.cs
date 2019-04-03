@@ -16,9 +16,7 @@ public class InteractiveObject : MonoBehaviour, IInteractive
     {
         audioSource = GetComponent<AudioSource>();
     }
-
-
-
+    
     public virtual void InteractWith()
     {
         if(audioSource != null)
