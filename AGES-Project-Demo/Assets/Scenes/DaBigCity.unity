@@ -1520,6 +1520,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   displayText: Door
+  isLocked: 1
+  lockedDisplayText: The Door is fuckin locked lol
+  lockedAudioClip: {fileID: 8300000, guid: 004cb6f9f7801554199b871b56498121, type: 3}
+  openAudioClip: {fileID: 8300000, guid: 5bf1839b0c66d954a8835db177f692eb, type: 3}
 --- !u!82 &696342321
 AudioSource:
   m_ObjectHideFlags: 0
@@ -3359,7 +3363,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh-50734
+  m_Name: pb_Mesh12268
   serializedVersion: 9
   m_SubMeshes:
   - serializedVersion: 2
@@ -3525,7 +3529,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh-63910
+  m_Name: pb_Mesh12244
   serializedVersion: 9
   m_SubMeshes:
   - serializedVersion: 2
@@ -4197,7 +4201,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh-69608
+  m_Name: pb_Mesh12288
   serializedVersion: 9
   m_SubMeshes:
   - serializedVersion: 2
