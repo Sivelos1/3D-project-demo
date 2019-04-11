@@ -506,3 +506,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayText: Get Golden Cube
   objectName: InventoryObject
+  description: 'Hm yes,
+
+
+    SCABINGUS'
+  icon: {fileID: 0}
