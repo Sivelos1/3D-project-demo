@@ -5,11 +5,12 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 public class InteractiveObject : MonoBehaviour, IInteractive
 {
-    public string DisplayText => displayText;
+    public virtual string DisplayText => displayText;
 
     [SerializeField]
     protected string displayText = nameof(InteractiveObject);
-    private AudioSource audioSource;
+
+    protected AudioSource audioSource;
 
     protected virtual void Awake()
     {
